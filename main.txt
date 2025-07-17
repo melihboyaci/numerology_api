@@ -1,0 +1,108 @@
+# Gerekli modülleri içeri aktaralım
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
+from datetime import date
+import json
+
+# --- 1. FastAPI Uygulamasını Başlatma ---
+app = FastAPI(
+    title="Numeroloji API",
+    description="İsim ve doğum tarihine göre numeroloji raporu oluşturan bir servis.",
+    version="1.0.0"
+)
+
+
+# --- 2. Veri Modellerini (Pydantic) Tanımlama ---
+# Bu modeller, FastAPI'nin gelen istekleri ve giden cevapları
+# otomatik olarak doğrulamasına ve belgelemesine olanak tanır.
+
+class NumerologyRequest(BaseModel):
+    """API'ye gönderilecek istek gövdesinin modeli."""
+    tam_isim: str = Field(..., example="Tesla", title="Tam İsim", description="Numeroloji analizi yapılacak kişinin adı ve soyadı.")
+    dogum_tarihi: date = Field(..., example="1856-07-10", title="Doğum Tarihi", description="Kişinin doğum tarihi (YYYY-MM-DD formatında).")
+
+
+class ReportItem(BaseModel):
+    """Rapor içindeki her bir numeroloji sayısının modeli."""
+    sayi: int
+    yorum: str
+
+class NumerologyReport(BaseModel):
+    """Numeroloji raporunun ana yapısı."""
+    yasam_yolu_sayisi: ReportItem
+    isim_sayisi: ReportItem
+
+class NumerologyResponse(BaseModel):
+    """API'den dönecek tam cevap modeli."""
+    istek_verileri: NumerologyRequest
+    numeroloji_raporu: NumerologyReport
+
+
+# --- 3. Numeroloji Hesaplama Mantığı ---
+# Bu kısım bir önceki cevaptaki mantığın aynısıdır.
+
+PYTHAGOREAN_MAP = {
+    'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9,
+    'J': 1, 'K': 2, 'L': 3, 'M': 4, 'N': 5, 'O': 6, 'P': 7, 'Q': 8, 'R': 9,
+    'S': 1, 'T': 2, 'U': 3, 'V': 4, 'W': 5, 'X': 6, 'Y': 7, 'Z': 8
+}
+
+NUMBER_INTERPRETATIONS = {
+    1: "Liderlik, bağımsızlık ve öncülük. Yeni başlangıçları ve bireyselliği temsil eder.",
+    2: "Uyum, denge, iş birliği ve diplomasi. İlişkilerde ve ortaklıklarda hassasiyeti simgeler.",
+    3: "Yaratıcılık, iletişim ve kendini ifade etme. Neşeli, sosyal ve sanatsal bir enerjidir.",
+    4: "İstikrar, düzen, disiplin ve sıkı çalışma. Güvenilirliğin ve sağlam temellerin sayısıdır.",
+    5: "Değişim, özgürlük, macera ve çok yönlülük. Hayatın getirdiği hareketliliği kucaklar.",
+    6: "Sorumluluk, aile, sevgi ve hizmet. Topluluk ve ev ile güçlü bağları temsil eder.",
+    7: "Analiz, içsel bilgelik ve maneviyat. Araştırmacı, derin düşünen ve sezgisel bir yapıya işaret eder.",
+    8: "Güç, başarı, materyalizm ve otorite. Finansal ve dünyevi konularda yetkinliği simgeler.",
+    9: "Hümanizm, şefkat, tamamlanma ve evrensellik. İnsanlığa hizmet etme arzusunu temsil eder.",
+    11: "Yüksek sezgi, idealizm ve aydınlanma. Manevi bir yol gösterici potansiyeli taşır.",
+    22: "Usta inşaatçı, büyük projeler ve pratik idealizm. Hayalleri gerçeğe dönüştürme gücüdür.",
+    33: "Usta öğretici, şifa ve evrensel sevgi. Koşulsuz sevgi ve fedakarlık enerjisidir."
+}
+
+def reduce_number(n: int) -> int:
+    """Bir sayıyı tek haneye veya ana sayılara (11, 22, 33) indirger."""
+    while n > 9 and n not in [11, 22, 33]:
+        n = sum(int(digit) for digit in str(n))
+    return n
+
+def calculate_life_path(birth_date: date) -> int:
+    """Yaşam Yolu Sayısını hesaplar."""
+    total = sum(int(digit) for digit in birth_date.strftime('%Y%m%d'))
+    return reduce_number(total)
+
+def calculate_name_number(name: str) -> int:
+    """İsim Sayısını hesaplar."""
+    name = name.upper().replace('Ç', 'C').replace('Ğ', 'G').replace('İ', 'I').replace('Ö', 'O').replace('Ş', 'S').replace('Ü', 'U')
+    total = sum(PYTHAGOREAN_MAP.get(char, 0) for char in name if char.isalpha())
+    return reduce_number(total)
+
+
+# --- 4. API Endpoint'ini (Uç Nokta) Oluşturma ---
+@app.post("/numerology-report", response_model=NumerologyResponse, tags=["Numeroloji"])
+async def create_numerology_report(request: NumerologyRequest):
+    """
+    Verilen tam isim ve doğum tarihine göre **Yaşam Yolu Sayısı** ve **İsim Sayısı**'nı
+    hesaplayarak tam bir numeroloji raporu oluşturur.
+    """
+    # Hesaplamaları yap
+    life_path_num = calculate_life_path(request.dogum_tarihi)
+    name_num = calculate_name_number(request.tam_isim)
+
+    # Cevabı hazırla
+    report = NumerologyResponse(
+        istek_verileri=request,
+        numeroloji_raporu=NumerologyReport(
+            yasam_yolu_sayisi=ReportItem(
+                sayi=life_path_num,
+                yorum=NUMBER_INTERPRETATIONS.get(life_path_num, "Bu sayı için yorum bulunamadı.")
+            ),
+            isim_sayisi=ReportItem(
+                sayi=name_num,
+                yorum=NUMBER_INTERPRETATIONS.get(name_num, "Bu sayı için yorum bulunamadı.")
+            )
+        )
+    )
+    return report
