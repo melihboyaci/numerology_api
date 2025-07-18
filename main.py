@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 
 limiter = Limiter(key_func=get_remote_address)
 
-
+"""
 api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=False)
 
 def get_valid_api_keys() -> dict:
@@ -38,7 +38,7 @@ async def get_api_key(api_key_header: str = Security(api_key_header)):
             detail="Invalid or inactive API key",
         )
 
-
+"""
 app = FastAPI(
     title="Numerology API",
     description="A service that generates numerology reports based on name and birth date.",
