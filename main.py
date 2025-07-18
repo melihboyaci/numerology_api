@@ -1,8 +1,15 @@
 import json
-from fastapi import FastAPI, Security, HTTPException, Depends, APIKeyHeader
+from fastapi import FastAPI, Security, HTTPException, Depends
+from fastapi.security import APIKeyHeader
+from fastapi import status
 from pydantic import BaseModel, Field
 from datetime import date
 import os
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 
 api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=False)
 
@@ -92,7 +99,11 @@ def calculate_name_number(name: str) -> int:
     total = sum(PYTHAGOREAN_MAP.get(char, 0) for char in name if char.isalpha())
     return reduce_number(total)
 
-@app.post("/numerology", response_model=NumerologyResponse, tags=["Numerology"])
+@app.post("/numerology",
+            response_model=NumerologyResponse,
+            tags=["Numerology"],
+            dependencies=[Depends(get_api_key)]
+)
 async def create_numerology_report(request: NumerologyRequest):
     
     life_path_num = calculate_life_path(request.birth_date)
