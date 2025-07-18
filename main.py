@@ -50,16 +50,18 @@ PYTHAGOREAN_MAP = {
 }
 
 NUMBER_INTERPRETATIONS = {
-    1: "Leadership, independence, and pioneering. Represents new beginnings and individuality.",
-    2: "Harmony, balance, cooperation, and diplomacy. Symbolizes sensitivity in relationships and partnerships.",
-    3: "Creativity, communication, and self-expression. A joyful, social, and artistic energy.",
-    4: "Stability, order, discipline, and hard work. The number of reliability and solid foundations.",
-    5: "Change, freedom, adventure, and versatility. Embraces the mobility that life brings.",
-    6: "Responsibility, family, love, and service. Represents strong ties to community and home.",
-    7: "Analysis, inner wisdom, and spirituality. Indicates a researcher with deep thinking and intuition.",
-    8: "Power, success, materialism, and authority. Symbolizes competence in financial and worldly matters.",
-    9: "Humanism, compassion, completion, and universality. Represents the desire to serve humanity.",
-    11: "High intuition, idealism, and enlightenment. Carries the potential of a spiritual guide."
+    1: "Liderlik, bağımsızlık ve öncülük. Yeni başlangıçları ve bireyselliği temsil eder.",
+    2: "Uyum, denge, iş birliği ve diplomasi. İlişkilerde ve ortaklıklarda hassasiyeti simgeler.",
+    3: "Yaratıcılık, iletişim ve kendini ifade etme. Neşeli, sosyal ve sanatsal bir enerjidir.",
+    4: "İstikrar, düzen, disiplin ve sıkı çalışma. Güvenilirliğin ve sağlam temellerin sayısıdır.",
+    5: "Değişim, özgürlük, macera ve çok yönlülük. Hayatın getirdiği hareketliliği kucaklar.",
+    6: "Sorumluluk, aile, sevgi ve hizmet. Topluluk ve ev ile güçlü bağları temsil eder.",
+    7: "Analiz, içsel bilgelik ve maneviyat. Araştırmacı, derin düşünen ve sezgisel bir yapıya işaret eder.",
+    8: "Güç, başarı, materyalizm ve otorite. Finansal ve dünyevi konularda yetkinliği simgeler.",
+    9: "Hümanizm, şefkat, tamamlanma ve evrensellik. İnsanlığa hizmet etme arzusunu temsil eder.",
+    11: "Yüksek sezgi, idealizm ve aydınlanma. Manevi bir yol gösterici potansiyeli taşır.",
+    22: "Usta inşaatçı, büyük projeler ve pratik idealizm. Hayalleri gerçeğe dönüştürme gücüdür.",
+    33: "Usta öğretici, şifa ve evrensel sevgi. Koşulsuz sevgi ve fedakarlık enerjisidir."
 }
 
 def reduce_number(n: int) -> int:
