@@ -109,8 +109,7 @@ def calculate_name_number(name: str) -> int:
 
 @app.post("/numerology",
             response_model=NumerologyResponse,
-            tags=["Numerology"],
-            dependencies=[Depends(get_api_key)]
+            tags=["Numerology"]
 )
 @limiter.limit("10/minute") # Limit to 10 requests per minute
 async def create_numerology_report(request: NumerologyRequest):
