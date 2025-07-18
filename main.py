@@ -10,6 +10,8 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
+limiter = Limiter(key_func=get_remote_address)
+
 
 api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=False)
 
@@ -42,6 +44,11 @@ app = FastAPI(
     description="A service that generates numerology reports based on name and birth date.",
     version="1.0.0"
 )
+
+# slowapi middleware
+app.state.limiter = limiter
+# limit aşıldığında çağrılacak handler
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 #Request body model
 class NumerologyRequest(BaseModel):
@@ -99,11 +106,13 @@ def calculate_name_number(name: str) -> int:
     total = sum(PYTHAGOREAN_MAP.get(char, 0) for char in name if char.isalpha())
     return reduce_number(total)
 
+
 @app.post("/numerology",
             response_model=NumerologyResponse,
             tags=["Numerology"],
             dependencies=[Depends(get_api_key)]
 )
+@limiter.limit("10/minute") # Limit to 10 requests per minute
 async def create_numerology_report(request: NumerologyRequest):
     
     life_path_num = calculate_life_path(request.birth_date)
