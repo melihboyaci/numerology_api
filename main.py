@@ -1,5 +1,5 @@
 import json
-from fastapi import FastAPI, Security, HTTPException, Depends
+from fastapi import FastAPI, Security, HTTPException, Depends, Request # Import Request
 from fastapi.security import APIKeyHeader
 from fastapi import status
 from pydantic import BaseModel, Field
@@ -12,33 +12,8 @@ from slowapi.errors import RateLimitExceeded
 
 limiter = Limiter(key_func=get_remote_address)
 
-"""
-api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=False)
+# ... (the rest of your existing code remains the same up to the endpoint)
 
-def get_valid_api_keys() -> dict:
-    try:
-        with open("api_keys.json", "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
-
-async def get_api_key(api_key_header: str = Security(api_key_header)):
-    if api_key_header is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API key header missing",
-        )
-    valid_keys = get_valid_api_keys()
-    key_info = valid_keys.get(api_key_header)
-    if key_info and key_info.get("status") == "active":
-        return api_key_header
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid or inactive API key",
-        )
-
-"""
 app = FastAPI(
     title="Numerology API",
     description="A service that generates numerology reports based on name and birth date.",
@@ -50,22 +25,19 @@ app.state.limiter = limiter
 # limit aşıldığında çağrılacak handler
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-#Request body model
+# ... (Pydantic models and helper functions remain the same)
 class NumerologyRequest(BaseModel):
     full_name: str = Field(..., example="Melih Boyacı", title="Full Name", description="The full name of the person for numerology analysis.")
     birth_date: date = Field(..., example="2003-11-26", title="Birth Date", description="The birth date of the person (in YYYY-MM-DD format).")
 
-# Response item model
 class ReportItem(BaseModel):
     number: int
     interpretation: str
 
-# Numerology report model
 class NumerologyReport(BaseModel):
     life_path_number: ReportItem
     name_number: ReportItem
 
-# Full response model
 class NumerologyResponse(BaseModel):
     request_data: NumerologyRequest
     numerology_report: NumerologyReport
@@ -90,7 +62,6 @@ NUMBER_INTERPRETATIONS = {
     11: "High intuition, idealism, and enlightenment. Carries the potential of a spiritual guide."
 }
 
-"""Reduces a number to a single digit or master number (11, 22, 33)."""
 def reduce_number(n: int) -> int:
     while n > 9 and n not in [11, 22, 33]:
         n = sum(int(digit) for digit in str(n))
@@ -111,14 +82,17 @@ def calculate_name_number(name: str) -> int:
             response_model=NumerologyResponse,
             tags=["Numerology"]
 )
-@limiter.limit("10/minute") # Limit to 10 requests per minute
-async def create_numerology_report(request: NumerologyRequest):
-    
-    life_path_num = calculate_life_path(request.birth_date)
-    name_num = calculate_name_number(request.full_name)
+@limiter.limit("10/minute")
+# Rename 'request' to 'numerology_request' and add 'request: Request'
+async def create_numerology_report(numerology_request: NumerologyRequest, request: Request):
+
+    # Use the new variable name to access the request body
+    life_path_num = calculate_life_path(numerology_request.birth_date)
+    name_num = calculate_name_number(numerology_request.full_name)
 
     report = NumerologyResponse(
-        request_data=request,
+        # Use the new variable name here as well
+        request_data=numerology_request,
         numerology_report=NumerologyReport(
             life_path_number=ReportItem(
                 number=life_path_num,
